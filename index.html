@@ -5,21 +5,22 @@
 <title>Olimpiade Matematika Dunia</title>
 
 <style>
+
 body{
 font-family:Arial;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+background:linear-gradient(135deg,#0f172a,#1e293b,#020617);
 color:white;
 text-align:center;
-padding:40px;
+padding:30px;
 }
 
 .container{
-max-width:700px;
+max-width:750px;
 margin:auto;
 background:#1e293b;
 padding:30px;
 border-radius:15px;
-box-shadow:0 0 20px rgba(0,0,0,0.5);
+box-shadow:0 0 30px rgba(0,0,0,0.5);
 }
 
 button{
@@ -40,7 +41,7 @@ background:#9333ea;
 .option{
 display:block;
 margin:10px;
-padding:10px;
+padding:12px;
 background:#334155;
 border-radius:8px;
 cursor:pointer;
@@ -52,15 +53,37 @@ background:#475569;
 
 #timer{
 font-size:20px;
-margin-bottom:20px;
+margin-bottom:15px;
+}
+
+.progress{
+width:100%;
+background:#334155;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:15px;
+}
+
+.progress-bar{
+height:12px;
+background:#7c3aed;
+width:0%;
 }
 
 .leaderboard{
-margin-top:20px;
+margin-top:25px;
 background:#0f172a;
 padding:15px;
 border-radius:10px;
 }
+
+input{
+padding:10px;
+border-radius:8px;
+border:none;
+margin-bottom:10px;
+}
+
 </style>
 </head>
 
@@ -69,15 +92,23 @@ border-radius:10px;
 <div class="container">
 
 <h1>Olimpiade Matematika Dunia</h1>
-<p>30 soal tingkat IMO</p>
+<p>Tingkat Kesulitan: IMO Level</p>
 
 <div id="start">
+
+<input id="name" placeholder="Masukkan nama kamu"><br>
+
 <button onclick="startQuiz()">Mulai Tantangan</button>
+
 </div>
 
 <div id="quiz" style="display:none">
 
 <div id="timer"></div>
+
+<div class="progress">
+<div class="progress-bar" id="progress"></div>
+</div>
 
 <h2 id="question"></h2>
 
@@ -90,8 +121,11 @@ border-radius:10px;
 <div id="result"></div>
 
 <div class="leaderboard">
-<h3>Top 10 Skor</h3>
+
+<h3>🏆 Top 10 Skor</h3>
+
 <ol id="leaderboard"></ol>
+
 </div>
 
 </div>
@@ -103,41 +137,22 @@ const wrongSound=new Audio("https://actions.google.com/sounds/v1/cartoon/boing.o
 
 let questions=[
 
-{
-q:"2 + 2 = ?",
-options:["3","4","5","6"],
-answer:1
-},
+{q:"2+2=?",options:["3","4","5","6"],answer:1},
 
-{
-q:"10 × 5 = ?",
-options:["40","45","50","55"],
-answer:2
-},
+{q:"12²=?",options:["124","144","132","142"],answer:1},
 
-{
-q:"12² = ?",
-options:["124","144","132","142"],
-answer:1
-},
+{q:"√81=?",options:["7","8","9","10"],answer:2},
 
-{
-q:"√81 = ?",
-options:["7","8","9","10"],
-answer:2
-},
+{q:"10×5=?",options:["40","45","50","55"],answer:2},
 
-{
-q:"15 + 27 = ?",
-options:["42","41","44","43"],
-answer:0
-}
+{q:"15+27=?",options:["42","41","44","43"],answer:0}
 
 ]
 
 let current=0
 let score=0
-let time=600
+let time=5400
+let player=""
 
 function shuffle(array){
 for(let i=array.length-1;i>0;i--){
@@ -150,11 +165,17 @@ shuffle(questions)
 
 function startQuiz(){
 
+player=document.getElementById("name").value
+
+if(player==""){
+alert("Masukkan nama dulu")
+return
+}
+
 document.getElementById("start").style.display="none"
 document.getElementById("quiz").style.display="block"
 
 loadQuestion()
-
 timer()
 
 }
@@ -165,15 +186,17 @@ let q=questions[current]
 
 document.getElementById("question").innerText=q.q
 
-let optionsHTML=""
+let html=""
 
 q.options.forEach((opt,i)=>{
 
-optionsHTML+=`<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+html+=`<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
 
 })
 
-document.getElementById("options").innerHTML=optionsHTML
+document.getElementById("options").innerHTML=html
+
+updateProgress()
 
 }
 
@@ -210,6 +233,14 @@ endQuiz()
 
 }
 
+function updateProgress(){
+
+let percent=(current/questions.length)*100
+
+document.getElementById("progress").style.width=percent+"%"
+
+}
+
 function timer(){
 
 setInterval(()=>{
@@ -237,29 +268,31 @@ document.getElementById("quiz").style.display="none"
 
 let percent=Math.floor(score/questions.length*100)
 
-let text=`Skor kamu: ${score}/${questions.length}`
+let text=`<h2>${player}</h2>Skor kamu: ${score}/${questions.length}`
 
 if(percent>=80){
 
-text+=`<h2>🎉 Selamat! Kamu Layak Mendapat Sertifikat</h2>`
+text+=`<h3>🎓 Kamu mendapatkan Sertifikat!</h3>`
 
 }
 
+text+=`<br><button onclick="location.reload()">Main Lagi</button>`
+
 document.getElementById("result").innerHTML=text
 
-saveScore(percent)
+saveScore(player,percent)
 
 showLeaderboard()
 
 }
 
-function saveScore(score){
+function saveScore(name,score){
 
 let scores=JSON.parse(localStorage.getItem("scores"))||[]
 
-scores.push(score)
+scores.push({name,score})
 
-scores.sort((a,b)=>b-a)
+scores.sort((a,b)=>b.score-a.score)
 
 scores=scores.slice(0,10)
 
@@ -275,7 +308,7 @@ let html=""
 
 scores.forEach(s=>{
 
-html+=`<li>${s}</li>`
+html+=`<li>${s.name} - ${s.score}</li>`
 
 })
 
